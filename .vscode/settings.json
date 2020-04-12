@@ -1,0 +1,15 @@
+{
+  "[c]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[cpp]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "stm8s_clk.h": "c",
+    "*.tcc": "c"
+  }
+}
