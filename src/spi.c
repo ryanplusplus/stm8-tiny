@@ -27,22 +27,14 @@ static void transfer(
   uint16_t buffer_size) {
   (void)_self;
 
-  SPI->DR = write_buffer ? write_buffer[0] : 0;
-
-  for(uint16_t i = 1; i < buffer_size; i++) {
+  for(uint16_t i = 0; i < buffer_size; i++) {
     wait_for_tx_empty();
-
     SPI->DR = write_buffer ? write_buffer[i] : 0;
 
     if(read_buffer) {
       wait_for_rx_not_empty();
-      read_buffer[i - 1] = SPI->DR;
+      read_buffer[i] = SPI->DR;
     }
-  }
-
-  if(read_buffer) {
-    wait_for_rx_not_empty();
-    read_buffer[buffer_size - 1] = SPI->DR;
   }
 }
 
