@@ -6,7 +6,7 @@
 #include "stm8s_flash.h"
 #include "opt.h"
 
-inline void unlock_opt(void) {
+static inline void unlock_opt(void) {
   FLASH->DUKR = FLASH_RASS_KEY2;
   FLASH->DUKR = FLASH_RASS_KEY1;
   while(!(FLASH->IAPSR & FLASH_FLAG_DUL)) {
@@ -15,7 +15,7 @@ inline void unlock_opt(void) {
   FLASH->NCR2 &= ~FLASH_NCR2_NOPT;
 }
 
-inline void lock_opt(void) {
+static inline void lock_opt(void) {
   FLASH->IAPSR &= ~FLASH_FLAG_DUL;
 }
 
@@ -28,7 +28,7 @@ static volatile uint8_t* address(uint8_t which) {
   }
 }
 
-inline void write(uint8_t which, uint8_t value) {
+static inline void write(uint8_t which, uint8_t value) {
   *address(which) = value;
   *(address(which) + 1) = ~value;
 

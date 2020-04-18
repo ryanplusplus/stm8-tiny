@@ -22,23 +22,17 @@ enum {
 };
 typedef uint8_t mode_t;
 
-static struct {
-  i_tiny_async_i2c_t interface;
-
-  mode_t mode;
-
-  uint8_t address;
-
-  union {
-    const uint8_t* write;
-    uint8_t* read;
-  } buffer;
-  uint16_t buffer_size;
-  uint16_t buffer_offset;
-
-  tiny_async_i2c_callback_t callback;
-  void* context;
-} self;
+static i_tiny_async_i2c_t self;
+static mode_t mode;
+static uint8_t address;
+static union {
+  const uint8_t* write;
+  uint8_t* read;
+} buffer;
+static uint16_t buffer_size;
+static uint16_t buffer_offset;
+static tiny_async_i2c_callback_t callback;
+static void* context;
 
 static void reset(i_tiny_async_i2c_t* _self);
 
@@ -57,15 +51,15 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
     dummy = I2C->SR1;
 
     // Send the slave address and R/W bit
-    I2C->DR = (self.address << 1) | (self.mode & 0x01);
+    I2C->DR = (address << 1) | (mode & 0x01);
 
     return;
   }
 
   // Address sent
   if(I2C->SR1 & I2C_SR1_ADDR) {
-    if(self.mode == mode_read) {
-      if(self.buffer_size == 1) {
+    if(mode == mode_read) {
+      if(buffer_size == 1) {
         I2C->CR2 &= ~I2C_CR2_ACK;
 
         // Clear address sent event by reading SR1 and then SR3
@@ -74,7 +68,7 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
 
         I2C->CR2 |= I2C_CR2_STOP;
       }
-      else if(self.buffer_size == 2) {
+      else if(buffer_size == 2) {
         // Clear address sent event by reading SR1 and then SR3
         dummy = I2C->SR1;
         dummy = I2C->SR3;
@@ -99,15 +93,15 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
 
   // Transmit buffer is empty
   if(I2C->SR1 & I2C_SR1_TXE) {
-    if(self.buffer_offset < self.buffer_size) {
-      I2C->DR = self.buffer.write[self.buffer_offset++];
+    if(buffer_offset < buffer_size) {
+      I2C->DR = buffer.write[buffer_offset++];
     }
     else {
-      if(self.mode == mode_write) {
+      if(mode == mode_write) {
         I2C->CR2 = I2C_CR2_STOP;
       }
 
-      self.callback(self.context, true);
+      callback(context, true);
     }
 
     return;
@@ -115,21 +109,21 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
 
   // Byte transfer finished
   if(I2C->SR1 & I2C_SR1_BTF) {
-    if(self.buffer_size == 2) {
+    if(buffer_size == 2) {
       I2C->CR2 |= I2C_CR2_STOP;
 
-      self.buffer.read[self.buffer_offset++] = I2C->DR;
-      self.buffer.read[self.buffer_offset++] = I2C->DR;
+      buffer.read[buffer_offset++] = I2C->DR;
+      buffer.read[buffer_offset++] = I2C->DR;
 
-      self.callback(self.context, true);
+      callback(context, true);
       return;
     }
-    else if(self.buffer_size > 2) {
-      if((self.buffer_size - self.buffer_offset) > 3) {
-        self.buffer.read[self.buffer_offset++] = I2C->DR;
+    else if(buffer_size > 2) {
+      if((buffer_size - buffer_offset) > 3) {
+        buffer.read[buffer_offset++] = I2C->DR;
         return;
       }
-      else if((self.buffer_size - self.buffer_offset) == 3) {
+      else if((buffer_size - buffer_offset) == 3) {
         // Re-enable buffer interrupts so that we can receive the last byte using
         // RXNE
         I2C->ITR |= I2C_ITR_ITBUFEN;
@@ -141,8 +135,8 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
         I2C->CR2 |= I2C_CR2_STOP;
         volatile uint8_t byte2 = I2C->DR;
 
-        self.buffer.read[self.buffer_offset++] = byte1;
-        self.buffer.read[self.buffer_offset++] = byte2;
+        buffer.read[buffer_offset++] = byte1;
+        buffer.read[buffer_offset++] = byte2;
 
         return;
       }
@@ -151,24 +145,24 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
 
   // Receive buffer is not empty
   if(I2C->SR1 & I2C_SR1_RXNE) {
-    if(self.buffer_size == 1) {
-      self.buffer.read[0] = I2C->DR;
-      self.callback(self.context, true);
+    if(buffer_size == 1) {
+      buffer.read[0] = I2C->DR;
+      callback(context, true);
       return;
     }
-    else if(self.buffer_size == 2) {
+    else if(buffer_size == 2) {
       return;
     }
-    else if((self.buffer_size - self.buffer_offset) == 1) {
-      self.buffer.read[self.buffer_offset++] = I2C->DR;
-      self.callback(self.context, true);
+    else if((buffer_size - buffer_offset) == 1) {
+      buffer.read[buffer_offset++] = I2C->DR;
+      callback(context, true);
       return;
     }
   }
 
   // If we're still here something is wrong so let's reset and tell the client
   reset(NULL);
-  self.callback(self.context, false);
+  callback(context, false);
 }
 
 static void wait_for_stop_condition_to_be_sent(void) {
@@ -178,21 +172,21 @@ static void wait_for_stop_condition_to_be_sent(void) {
 
 static void write(
   i_tiny_async_i2c_t* _self,
-  uint8_t address,
-  bool prepare_for_restart,
-  const uint8_t* buffer,
-  uint16_t buffer_size,
-  tiny_async_i2c_callback_t callback,
-  void* context) {
+  uint8_t _address,
+  bool _prepare_for_restart,
+  const uint8_t* _buffer,
+  uint16_t _buffer_size,
+  tiny_async_i2c_callback_t _callback,
+  void* _context) {
   (void)_self;
 
-  self.address = address;
-  self.buffer.write = buffer;
-  self.buffer_size = buffer_size;
-  self.buffer_offset = 0;
-  self.mode = prepare_for_restart ? mode_write_with_restart : mode_write;
-  self.callback = callback;
-  self.context = context;
+  address = _address;
+  buffer.write = _buffer;
+  buffer_size = _buffer_size;
+  buffer_offset = 0;
+  mode = _prepare_for_restart ? mode_write_with_restart : mode_write;
+  callback = _callback;
+  context = _context;
 
   wait_for_stop_condition_to_be_sent();
 
@@ -201,21 +195,21 @@ static void write(
 
 static void read(
   i_tiny_async_i2c_t* _self,
-  uint8_t address,
-  bool prepare_for_restart,
-  uint8_t* buffer,
-  uint16_t buffer_size,
-  tiny_async_i2c_callback_t callback,
-  void* context) {
+  uint8_t _address,
+  bool _prepare_for_restart,
+  uint8_t* _buffer,
+  uint16_t _buffer_size,
+  tiny_async_i2c_callback_t _callback,
+  void* _context) {
   (void)_self;
 
-  self.address = address;
-  self.buffer.read = buffer;
-  self.buffer_size = buffer_size;
-  self.buffer_offset = 0;
-  self.mode = prepare_for_restart ? mode_read_with_restart : mode_read;
-  self.callback = callback;
-  self.context = context;
+  address = _address;
+  buffer.read = _buffer;
+  buffer_size = _buffer_size;
+  buffer_offset = 0;
+  mode = _prepare_for_restart ? mode_read_with_restart : mode_read;
+  callback = _callback;
+  context = _context;
 
   wait_for_stop_condition_to_be_sent();
 
@@ -272,9 +266,9 @@ static const i_tiny_async_i2c_api_t api = { write, read, reset };
 i_tiny_async_i2c_t* async_i2c_init(void) {
   reset(NULL);
 
-  self.interface.api = &api;
+  self.api = &api;
 
-  return &self.interface;
+  return &self;
 }
 
 #endif

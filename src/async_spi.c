@@ -8,56 +8,52 @@
 
 #ifdef SPI
 
-static struct {
-  i_tiny_async_spi_t interface;
-  void* context;
-  const uint8_t* write;
-  uint8_t* read;
-  uint16_t count;
-  uint16_t offset;
-  tiny_async_spi_callback_t callback;
-} self;
+static i_tiny_async_spi_t self;
+static void* context;
+static const uint8_t* write_buffer;
+static uint8_t* read_buffer;
+static uint16_t count;
+static uint16_t offset;
+static tiny_async_spi_callback_t callback;
 
 void async_spi_isr(void) __interrupt(ITC_IRQ_SPI) {
-  if(self.read) {
-    self.read[self.offset] = SPI->DR;
+  if(read_buffer) {
+    read_buffer[offset] = SPI->DR;
   }
 
-  self.offset++;
+  offset++;
 
-  if(self.offset >= self.count) {
+  if(offset >= count) {
     // Disable interrupts
     SPI->ICR = 0;
 
-    self.callback(self.context);
+    callback(context);
   }
   else {
-    SPI->DR = self.write[self.offset];
+    SPI->DR = write_buffer ? write_buffer[offset] : 0;
   }
 }
 
 static void transfer(
   i_tiny_async_spi_t* _self,
-  const uint8_t* write_buffer,
-  uint8_t* read_buffer,
-  uint16_t buffer_size,
-  tiny_async_spi_callback_t callback,
-  void* context) {
+  const uint8_t* _write_buffer,
+  uint8_t* _read_buffer,
+  uint16_t _buffer_size,
+  tiny_async_spi_callback_t _callback,
+  void* _context) {
   (void)_self;
 
-  self.callback = callback;
-  self.context = context;
-  self.write = write_buffer;
-  self.read = read_buffer;
-  self.count = buffer_size;
-  self.offset = 0;
+  callback = _callback;
+  context = _context;
+  write_buffer = _write_buffer;
+  read_buffer = _read_buffer;
+  count = _buffer_size;
+  offset = 0;
 
   // Enable RX interrupt
   SPI->ICR = SPI_ICR_RXEI;
 
-  if(self.write) {
-    SPI->DR = self.write[0];
-  }
+  SPI->DR = write_buffer ? write_buffer[0] : 0;
 }
 
 static const i_tiny_async_spi_api_t api = { transfer };
@@ -81,9 +77,9 @@ i_tiny_async_spi_t* async_spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, a
     SPI->CR1 |= SPI_CR1_CPHA;
   }
 
-  self.interface.api = &api;
+  self.api = &api;
 
-  return &self.interface;
+  return &self;
 }
 
 #endif

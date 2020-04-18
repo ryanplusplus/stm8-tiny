@@ -10,22 +10,20 @@
 
 #ifdef UART1
 
-static struct {
-  i_tiny_uart_t interface;
-  tiny_single_subscriber_event_t on_send_complete;
-  tiny_single_subscriber_event_t on_receive;
-} self;
+static i_tiny_uart_t self;
+static tiny_single_subscriber_event_t send_complete;
+static tiny_single_subscriber_event_t receive;
 
 void uart1_send_complete_isr(void) __interrupt(ITC_IRQ_UART1_TX) {
   // Disable TXE (transmit data register empty) interrupt
   UART1->CR2 &= ~UART1_CR2_TIEN;
-  tiny_single_subscriber_event_publish(&self.on_send_complete, NULL);
+  tiny_single_subscriber_event_publish(&send_complete, NULL);
 }
 
 void uart1_receive_isr(void) __interrupt(ITC_IRQ_UART1_RX) {
   volatile uint8_t dummy = UART1->SR;
   tiny_uart_on_receive_args_t args = { UART1->DR };
-  tiny_single_subscriber_event_publish(&self.on_receive, &args);
+  tiny_single_subscriber_event_publish(&receive, &args);
 }
 
 void send(i_tiny_uart_t* _self, uint8_t byte) {
@@ -39,16 +37,15 @@ void send(i_tiny_uart_t* _self, uint8_t byte) {
 
 i_tiny_event_t* on_send_complete(i_tiny_uart_t* _self) {
   (void)_self;
-  return &self.on_send_complete.interface;
+  return &send_complete.interface;
 }
 
 i_tiny_event_t* on_receive(i_tiny_uart_t* _self) {
   (void)_self;
-  return &self.on_receive.interface;
+  return &receive.interface;
 }
 
-static const i_tiny_uart_api_t api =
-  { send, on_send_complete, on_receive };
+static const i_tiny_uart_api_t api = { send, on_send_complete, on_receive };
 
 i_tiny_uart_t* uart1_init(void) {
   // Un-gate clock for UART1
@@ -65,12 +62,12 @@ i_tiny_uart_t* uart1_init(void) {
   // Enable RXNE (receive data register not empty) interrupt
   UART1->CR2 |= UART1_CR2_RIEN;
 
-  self.interface.api = &api;
+  self.api = &api;
 
-  tiny_single_subscriber_event_init(&self.on_send_complete);
-  tiny_single_subscriber_event_init(&self.on_receive);
+  tiny_single_subscriber_event_init(&send_complete);
+  tiny_single_subscriber_event_init(&receive);
 
-  return &self.interface;
+  return &self;
 }
 
 #endif
