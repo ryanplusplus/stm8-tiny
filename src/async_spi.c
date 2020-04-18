@@ -53,7 +53,7 @@ static void transfer(
   count = _buffer_size;
   offset = 0;
 
-  // Enable TX/RX interrupt
+  // Enable RX interrupt
   SPI->ICR = SPI_ICR_RXEI;
 
   SPI->DR = write_buffer ? write_buffer[0] : 0;
