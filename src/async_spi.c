@@ -20,6 +20,9 @@ void async_spi_isr(void) __interrupt(ITC_IRQ_SPI) {
   if(read_buffer) {
     read_buffer[offset] = SPI->DR;
   }
+  else {
+    uint8_t dummy = SPI->DR;
+  }
 
   offset++;
 
@@ -50,7 +53,7 @@ static void transfer(
   count = _buffer_size;
   offset = 0;
 
-  // Enable RX interrupt
+  // Enable TX/RX interrupt
   SPI->ICR = SPI_ICR_RXEI;
 
   SPI->DR = write_buffer ? write_buffer[0] : 0;
