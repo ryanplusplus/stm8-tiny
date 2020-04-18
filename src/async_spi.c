@@ -68,6 +68,9 @@ i_tiny_async_spi_t* async_spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, a
   // Enable peripheral in master mode
   SPI->CR1 = SPI_CR1_SPE | SPI_CR1_MSTR | (baud << 3);
 
+  // Software slave select mode
+  SPI->CR2 = SPI_CR2_SSM | SPI_CR2_SSI;
+
   if(!msb_first) {
     SPI->CR1 |= SPI_CR1_LSBFIRST;
   }
