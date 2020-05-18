@@ -18,7 +18,7 @@ enum {
   mode_write = I2C_DIRECTION_TX,
   mode_write_with_restart = 0x10 + I2C_DIRECTION_TX,
   mode_read = I2C_DIRECTION_RX,
-  mode_read_with_restart = 0x10 + I2C_DIRECTION_TX,
+  mode_read_with_restart = 0x10 + I2C_DIRECTION_RX,
 };
 typedef uint8_t mode_t;
 
@@ -35,6 +35,12 @@ static tiny_async_i2c_callback_t callback;
 static void* context;
 
 static void reset(i_tiny_async_i2c_t* _self);
+
+static void finish(void) {
+  // Disable all interrupts
+  I2C->ITR = 0;
+  callback(context, true);
+}
 
 void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
   volatile uint8_t dummy;
@@ -101,7 +107,7 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
         I2C->CR2 = I2C_CR2_STOP;
       }
 
-      callback(context, true);
+      finish();
     }
 
     return;
@@ -115,7 +121,7 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
       buffer.read[buffer_offset++] = I2C->DR;
       buffer.read[buffer_offset++] = I2C->DR;
 
-      callback(context, true);
+      finish();
       return;
     }
     else if(buffer_size > 2) {
@@ -147,7 +153,7 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
   if(I2C->SR1 & I2C_SR1_RXNE) {
     if(buffer_size == 1) {
       buffer.read[0] = I2C->DR;
-      callback(context, true);
+      finish();
       return;
     }
     else if(buffer_size == 2) {
@@ -155,7 +161,7 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
     }
     else if((buffer_size - buffer_offset) == 1) {
       buffer.read[buffer_offset++] = I2C->DR;
-      callback(context, true);
+      finish();
       return;
     }
   }
@@ -191,6 +197,8 @@ static void write(
   wait_for_stop_condition_to_be_sent();
 
   I2C->CR2 = I2C_CR2_START;
+
+  I2C->ITR = I2C_ITR_ITBUFEN | I2C_ITR_ITEVTEN | I2C_ITR_ITERREN;
 }
 
 static void read(
@@ -213,12 +221,15 @@ static void read(
 
   wait_for_stop_condition_to_be_sent();
 
-  if(buffer_size > 2) {
-    // Disable buffer interrupts because we will be using BTF instead
-    I2C->ITR &= ~I2C_ITR_ITBUFEN;
-  }
-
   I2C->CR2 = I2C_CR2_START | I2C_CR2_ACK;
+
+  // We use BTF when reading 2+ bytes
+  if(buffer_size > 2) {
+    I2C->ITR = I2C_ITR_ITEVTEN | I2C_ITR_ITERREN;
+  }
+  else {
+    I2C->ITR = I2C_ITR_ITBUFEN | I2C_ITR_ITEVTEN | I2C_ITR_ITERREN;
+  }
 }
 
 static void configure_peripheral(void) {
@@ -248,8 +259,8 @@ static void configure_peripheral(void) {
   // 1000 / 62.5 = 16 => 16 + 1 = 17
   I2C->TRISER = 17;
 
-  // Enable buffer, event, error interrupts
-  I2C->ITR = I2C_ITR_ITBUFEN | I2C_ITR_ITEVTEN | I2C_ITR_ITERREN;
+  // Disable all interrupts
+  I2C->ITR = 0;
 
   // Enable peripheral
   I2C->CR1 = I2C_CR1_PE;
@@ -265,9 +276,7 @@ static const i_tiny_async_i2c_api_t api = { write, read, reset };
 
 i_tiny_async_i2c_t* async_i2c_init(void) {
   reset(NULL);
-
   self.api = &api;
-
   return &self;
 }
 
