@@ -12,7 +12,8 @@ enum {
   refresh = 0xAA
 };
 
-void watchdog_init(void) {
+void watchdog_init(void)
+{
   // Start the watchdog and unlock the IWDG registers
   IWDG->KR = start;
   IWDG->KR = unlock;
@@ -32,6 +33,7 @@ void watchdog_init(void) {
   IWDG->RLR = refresh;
 }
 
-void watchdog_kick(void) {
+void watchdog_kick(void)
+{
   IWDG->KR = refresh;
 }

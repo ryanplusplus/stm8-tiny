@@ -36,13 +36,15 @@ static void* context;
 
 static void reset(i_tiny_async_i2c_t* _self);
 
-static void finish(void) {
+static void finish(void)
+{
   // Disable all interrupts
   I2C->ITR = 0;
   callback(context, true);
 }
 
-void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
+void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C)
+{
   volatile uint8_t dummy;
 
   // In the case of a restart, TXE and BTF will still be set until start is sent
@@ -171,7 +173,8 @@ void async_i2c_isr(void) __interrupt(ITC_IRQ_I2C) {
   callback(context, false);
 }
 
-static void wait_for_stop_condition_to_be_sent(void) {
+static void wait_for_stop_condition_to_be_sent(void)
+{
   while((I2C->CR2 & I2C_CR2_STOP) && (I2C->SR3 & I2C_SR3_MSL)) {
   }
 }
@@ -183,7 +186,8 @@ static void write(
   const uint8_t* _buffer,
   uint16_t _buffer_size,
   tiny_async_i2c_callback_t _callback,
-  void* _context) {
+  void* _context)
+{
   (void)_self;
 
   address = _address;
@@ -208,7 +212,8 @@ static void read(
   uint8_t* _buffer,
   uint16_t _buffer_size,
   tiny_async_i2c_callback_t _callback,
-  void* _context) {
+  void* _context)
+{
   (void)_self;
 
   address = _address;
@@ -232,7 +237,8 @@ static void read(
   }
 }
 
-static void configure_peripheral(void) {
+static void configure_peripheral(void)
+{
   // Disable peripheral
   I2C->CR1 = 0;
 
@@ -266,7 +272,8 @@ static void configure_peripheral(void) {
   I2C->CR1 = I2C_CR1_PE;
 }
 
-static void reset(i_tiny_async_i2c_t* _self) {
+static void reset(i_tiny_async_i2c_t* _self)
+{
   (void)_self;
   I2C->CR2 = I2C_CR2_SWRST;
   configure_peripheral();
@@ -274,7 +281,8 @@ static void reset(i_tiny_async_i2c_t* _self) {
 
 static const i_tiny_async_i2c_api_t api = { write, read, reset };
 
-i_tiny_async_i2c_t* async_i2c_init(void) {
+i_tiny_async_i2c_t* async_i2c_init(void)
+{
   reset(NULL);
   self.api = &api;
   return &self;

@@ -15,13 +15,15 @@ enum {
 
 static tiny_timer_t timer;
 
-static void blink(tiny_timer_group_t* group, void* context) {
+static void blink(tiny_timer_group_t* group, void* context)
+{
   (void)context;
   GPIOE->ODR ^= pin_5;
   tiny_timer_start(group, &timer, half_period_in_msec, blink, NULL);
 }
 
-void pe5_heartbeat_init(tiny_timer_group_t* timer_group) {
+void pe5_heartbeat_init(tiny_timer_group_t* timer_group)
+{
   // Configure push pull output
   GPIOE->CR1 |= pin_5;
   GPIOE->DDR |= pin_5;

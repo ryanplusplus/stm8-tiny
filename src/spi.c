@@ -10,12 +10,14 @@
 
 static i_tiny_spi_t self;
 
-static inline void wait_for_tx_empty(void) {
+static inline void wait_for_tx_empty(void)
+{
   while(!(SPI->SR & SPI_SR_TXE)) {
   }
 }
 
-static inline void wait_for_rx_not_empty(void) {
+static inline void wait_for_rx_not_empty(void)
+{
   while(!(SPI->SR & SPI_SR_RXNE)) {
   }
 }
@@ -24,7 +26,8 @@ static void transfer(
   i_tiny_spi_t* _self,
   const uint8_t* write_buffer,
   uint8_t* read_buffer,
-  uint16_t buffer_size) {
+  uint16_t buffer_size)
+{
   (void)_self;
 
   for(uint16_t i = 0; i < buffer_size; i++) {
@@ -40,7 +43,8 @@ static void transfer(
 
 static const i_tiny_spi_api_t api = { transfer };
 
-i_tiny_spi_t* spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, spi_baud_t baud) {
+i_tiny_spi_t* spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, spi_baud_t baud)
+{
   // Un-gate clock for SPI
   CLK->PCKENR1 |= (1 << CLK_PERIPHERAL_SPI);
 

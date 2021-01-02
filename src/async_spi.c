@@ -16,7 +16,8 @@ static uint16_t count;
 static uint16_t offset;
 static tiny_async_spi_callback_t callback;
 
-void async_spi_isr(void) __interrupt(ITC_IRQ_SPI) {
+void async_spi_isr(void) __interrupt(ITC_IRQ_SPI)
+{
   if(read_buffer) {
     read_buffer[offset] = SPI->DR;
   }
@@ -43,7 +44,8 @@ static void transfer(
   uint8_t* _read_buffer,
   uint16_t _buffer_size,
   tiny_async_spi_callback_t _callback,
-  void* _context) {
+  void* _context)
+{
   (void)_self;
 
   callback = _callback;
@@ -61,7 +63,8 @@ static void transfer(
 
 static const i_tiny_async_spi_api_t api = { transfer };
 
-i_tiny_async_spi_t* async_spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, async_spi_baud_t baud) {
+i_tiny_async_spi_t* async_spi_init(uint8_t cpol, uint8_t cpha, bool msb_first, async_spi_baud_t baud)
+{
   // Un-gate clock for SPI
   CLK->PCKENR1 |= (1 << CLK_PERIPHERAL_SPI);
 

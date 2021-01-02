@@ -11,20 +11,23 @@
 static i_tiny_time_source_t self;
 static volatile tiny_time_source_ticks_t ticks;
 
-void tim4_system_tick_isr(void) __interrupt(ITC_IRQ_TIM4_OVF) {
+void tim4_system_tick_isr(void) __interrupt(ITC_IRQ_TIM4_OVF)
+{
   // Clear interrupt flag
   TIM4->SR1 &= ~TIM4_SR1_UIF;
   ticks++;
 }
 
-static tiny_time_source_ticks_t _ticks(i_tiny_time_source_t* self) __critical {
+static tiny_time_source_ticks_t _ticks(i_tiny_time_source_t* self) __critical
+{
   (void)self;
   return ticks;
 }
 
 static const i_tiny_time_source_api_t api = { _ticks };
 
-i_tiny_time_source_t* tim4_system_tick_init(void) {
+i_tiny_time_source_t* tim4_system_tick_init(void)
+{
   // Un-gate clock for TIM4
   CLK->PCKENR1 |= (1 << CLK_PERIPHERAL_TIMER4);
 

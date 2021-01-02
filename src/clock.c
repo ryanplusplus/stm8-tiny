@@ -6,7 +6,8 @@
 #include "stm8s.h"
 #include "clock.h"
 
-void clock_init(void) {
+void clock_init(void)
+{
   // No divisor, run at 16 MHz
   CLK->CKDIVR = 0;
 
