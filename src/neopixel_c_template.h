@@ -4,6 +4,7 @@
  */
 
 #include "stm8s.h"
+#include "interrupts.h"
 #include "neopixel_h_template.h"
 
 #ifndef neopixel_port
@@ -14,7 +15,7 @@
 #error "neopixel_pin must be defined"
 #endif
 
-#define port neopixel_concat(GPIO, neopixel_concat(neopixel_port, _BaseAddress))
+#define port_address neopixel_concat(GPIO, neopixel_concat(neopixel_port, _BaseAddress))
 #define pin #neopixel_pin
 
 static void send_byte(uint8_t byte)
@@ -23,20 +24,12 @@ static void send_byte(uint8_t byte)
 
   // clang-format off
   __asm
-    disable_interrupts$:
-      ld    a, #0
-      jrnm  save_interrupt_state$
-      ld    a, #1
-    save_interrupt_state$:
-      push  a
-      sim
-
     send_byte$:
-      ld    a, (0x04, sp)   ; a <- byte
+      ld    a, (0x03, sp)   ; a <- byte
       ldw   y, #8
 
     send_bit$:
-      bset  port, pin
+      bset  port_address, pin
       sll   a               ; roll left, setting carry if msb(a) == 1
       jrc   send_1$         ; if carry not set
 
@@ -45,7 +38,7 @@ static void send_byte(uint8_t byte)
       nop
       nop
       nop
-      bres  port, pin
+      bres  port_address, pin
       nop
       nop
       nop
@@ -69,31 +62,34 @@ static void send_byte(uint8_t byte)
       nop
       nop
       nop
-      bres  port, pin
+      bres  port_address, pin
       nop
       nop
       decw  y
       jrne  send_bit$
 
     done$:
-    restore_interrupt_state$:
-      pop a
-      tnz a
-      jreq exit$
-      rim
-
-    exit$:
   __endasm;
   // clang-format on
 }
 
+void neopixel_concat(neopixel_api_name, _init)(void)
+{
+  neopixel_concat(GPIO, neopixel_port)->CR1 |= (1 << pin);
+  neopixel_concat(GPIO, neopixel_port)->DDR |= (1 << pin);
+}
+
 void neopixel_concat(neopixel_api_name, _write)(const neopixel_concat(neopixel_api_name, _color_t) * data, uint16_t count)
 {
+  uint8_t state = interrupts_save();
+
   for(uint16_t i = 0; i < count; i++) {
     for(uint8_t j = 0; j < sizeof(data[0]); j++) {
       send_byte(((const uint8_t*)data)[i * sizeof(data[0]) + j]);
     }
   }
+
+  interrupts_restore(state);
 }
 
 void neopixel_concat(neopixel_api_name, _reset)(void)

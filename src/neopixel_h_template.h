@@ -46,6 +46,7 @@ typedef struct {
 #error "neopixel_byte_order must be neopixel_byte_order_grb, neopixel_byte_order_rgb, or neopixel_byte_order_rgbw"
 #endif
 
+void neopixel_concat(neopixel_api_name, _init)(void);
 void neopixel_concat(neopixel_api_name, _write)(const neopixel_concat(neopixel_api_name, _color_t) * data, uint16_t count);
 void neopixel_concat(neopixel_api_name, _reset)(void);
 
