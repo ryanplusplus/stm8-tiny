@@ -4,7 +4,7 @@
  */
 
 #include "stm8s.h"
-#include "neopixel.h.template"
+#include "neopixel_h_template.h"
 
 #ifndef neopixel_port
 #error "neopixel_port must be defined"
@@ -87,10 +87,12 @@ static void send_byte(uint8_t byte)
   // clang-format on
 }
 
-void neopixel_concat(neopixel_api_name, _write)(const uint8_t* data, uint16_t count)
+void neopixel_concat(neopixel_api_name, _write)(const neopixel_concat(neopixel_api_name, _color_t) * data, uint16_t count)
 {
   for(uint16_t i = 0; i < count; i++) {
-    send_byte(data[i]);
+    for(uint8_t j = 0; j < sizeof(data[0]); j++) {
+      send_byte(((const uint8_t*)data)[i * sizeof(data[0]) + j]);
+    }
   }
 }
 
