@@ -92,6 +92,19 @@ void neopixel_concat(neopixel_api_name, _write)(const neopixel_concat(neopixel_a
   interrupts_restore(state);
 }
 
+void neopixel_concat(neopixel_api_name, _write_all)(const neopixel_concat(neopixel_api_name, _color_t) * data, uint16_t count)
+{
+  uint8_t state = interrupts_save();
+
+  for(uint16_t i = 0; i < count; i++) {
+    for(uint8_t j = 0; j < sizeof(data[0]); j++) {
+      send_byte(((const uint8_t*)data)[j]);
+    }
+  }
+
+  interrupts_restore(state);
+}
+
 void neopixel_concat(neopixel_api_name, _reset)(void)
 {
   // clang-format off
