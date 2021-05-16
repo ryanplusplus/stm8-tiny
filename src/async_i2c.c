@@ -183,7 +183,7 @@ static void write(
   i_tiny_async_i2c_t* _self,
   uint8_t _address,
   bool _prepare_for_restart,
-  const uint8_t* _buffer,
+  const void* _buffer,
   uint16_t _buffer_size,
   tiny_async_i2c_callback_t _callback,
   void* _context)
@@ -209,7 +209,7 @@ static void read(
   i_tiny_async_i2c_t* _self,
   uint8_t _address,
   bool _prepare_for_restart,
-  uint8_t* _buffer,
+  void* _buffer,
   uint16_t _buffer_size,
   tiny_async_i2c_callback_t _callback,
   void* _context)

@@ -40,8 +40,8 @@ void async_spi_isr(void) __interrupt(ITC_IRQ_SPI)
 
 static void transfer(
   i_tiny_async_spi_t* _self,
-  const uint8_t* _write_buffer,
-  uint8_t* _read_buffer,
+  const void* _write_buffer,
+  void* _read_buffer,
   uint16_t _buffer_size,
   tiny_async_spi_callback_t _callback,
   void* _context)

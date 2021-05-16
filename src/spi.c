@@ -24,19 +24,19 @@ static inline void wait_for_rx_not_empty(void)
 
 static void transfer(
   i_tiny_spi_t* _self,
-  const uint8_t* write_buffer,
-  uint8_t* read_buffer,
+  const void* write_buffer,
+  void* read_buffer,
   uint16_t buffer_size)
 {
   (void)_self;
 
   for(uint16_t i = 0; i < buffer_size; i++) {
     wait_for_tx_empty();
-    SPI->DR = write_buffer ? write_buffer[i] : 0;
+    SPI->DR = write_buffer ? ((const uint8_t*)write_buffer)[i] : 0;
 
     if(read_buffer) {
       wait_for_rx_not_empty();
-      read_buffer[i] = SPI->DR;
+      ((uint8_t*)read_buffer)[i] = SPI->DR;
     }
   }
 }
