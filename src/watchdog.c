@@ -7,12 +7,25 @@
 #include "watchdog.h"
 
 enum {
+  kick_period_msec = 25
+};
+
+enum {
   unlock = 0x55,
   start = 0xCC,
   refresh = 0xAA
 };
 
-void watchdog_init(void)
+static tiny_timer_t timer;
+
+static void kick(tiny_timer_group_t* timer_group, void* context)
+{
+  (void)timer_group;
+  (void)context;
+  IWDG->KR = refresh;
+}
+
+void watchdog_init(tiny_timer_group_t* timer_group)
 {
   // Start the watchdog and unlock the IWDG registers
   IWDG->KR = start;
@@ -31,9 +44,6 @@ void watchdog_init(void)
 
   // Lock the IWDG registers and actually start counting
   IWDG->RLR = refresh;
-}
 
-void watchdog_kick(void)
-{
-  IWDG->KR = refresh;
+  tiny_timer_start_periodic(timer_group, &timer, kick_period_msec, kick, NULL);
 }
