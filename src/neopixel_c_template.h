@@ -5,7 +5,6 @@
 
 #include "stm8s.h"
 #include "interrupts.h"
-#include "neopixel_h_template.h"
 
 #ifndef neopixel_port
 #error "neopixel_port must be defined"
