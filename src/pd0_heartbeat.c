@@ -17,9 +17,9 @@ static tiny_timer_t timer;
 
 static void blink(tiny_timer_group_t* group, void* context)
 {
+  (void)group;
   (void)context;
   GPIOD->ODR ^= pin_0;
-  tiny_timer_start(group, &timer, half_period_in_msec, blink, NULL);
 }
 
 void pd0_heartbeat_init(tiny_timer_group_t* timer_group)
@@ -28,5 +28,5 @@ void pd0_heartbeat_init(tiny_timer_group_t* timer_group)
   GPIOD->CR1 |= pin_0;
   GPIOD->DDR |= pin_0;
 
-  tiny_timer_start(timer_group, &timer, half_period_in_msec, blink, NULL);
+  tiny_timer_start_periodic(timer_group, &timer, half_period_in_msec, blink, NULL);
 }
