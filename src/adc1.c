@@ -26,8 +26,8 @@ static tiny_analog_input_counts_t read(i_tiny_analog_input_group_t* _self, tiny_
 
   // Defaults to left aligned ("16 bit") mode
   // Read DRH first and shift 6 to normalize from 10-bit to 16-bit
-  tiny_analog_input_counts_t result = ADC1->DRL << 8;
-  return result | ADC1->DRL;
+  tiny_analog_input_counts_t result = ADC1->DRH << 8;
+  return result | (ADC1->DRL << 6);
 }
 
 static const i_tiny_analog_input_group_api_t api = { read };
