@@ -6,8 +6,6 @@ INC_DIRS += \
   $(__lib_stm8-tiny_path)lib/tiny/include \
   $(__lib_stm8-tiny_path)src \
 
-stm8-tiny_LIB_ROOT := $(__lib_stm8-tiny_path)
-
 stm8-tiny_ASFLAGS := $(ASFLAGS)
 stm8-tiny_CPPFLAGS := $(CPPFLAGS)
 stm8-tiny_CFLAGS := $(CFLAGS)
