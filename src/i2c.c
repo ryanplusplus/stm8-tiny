@@ -37,8 +37,8 @@ static bool write(
     prepare_for_restart,
     buffer,
     buffer_size,
-    callback,
-    &context);
+    &context,
+    callback);
 
   while(!context.done) {
   }
@@ -62,8 +62,8 @@ static bool read(
     prepare_for_restart,
     buffer,
     buffer_size,
-    callback,
-    &context);
+    &context,
+    callback);
 
   while(!context.done) {
   }
