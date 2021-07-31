@@ -45,5 +45,5 @@ void watchdog_init(tiny_timer_group_t* timer_group)
   // Lock the IWDG registers and actually start counting
   IWDG->RLR = refresh;
 
-  tiny_timer_start_periodic(timer_group, &timer, kick_period_msec, kick, NULL);
+  tiny_timer_start_periodic(timer_group, &timer, kick_period_msec, NULL, kick);
 }

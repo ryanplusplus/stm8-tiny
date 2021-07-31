@@ -185,8 +185,8 @@ static void write(
   bool _prepare_for_restart,
   const void* _buffer,
   uint16_t _buffer_size,
-  tiny_async_i2c_callback_t _callback,
-  void* _context)
+  void* _context,
+  tiny_async_i2c_callback_t _callback)
 {
   (void)_self;
 
@@ -211,8 +211,8 @@ static void read(
   bool _prepare_for_restart,
   void* _buffer,
   uint16_t _buffer_size,
-  tiny_async_i2c_callback_t _callback,
-  void* _context)
+  void* _context,
+  tiny_async_i2c_callback_t _callback)
 {
   (void)_self;
 

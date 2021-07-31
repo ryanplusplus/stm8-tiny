@@ -43,8 +43,8 @@ static void transfer(
   const void* _write_buffer,
   void* _read_buffer,
   uint16_t _buffer_size,
-  tiny_async_spi_callback_t _callback,
-  void* _context)
+  void* _context,
+  tiny_async_spi_callback_t _callback)
 {
   (void)_self;
 
