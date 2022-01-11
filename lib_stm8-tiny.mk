@@ -1,4 +1,4 @@
-__lib_stm8-tiny_path := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+__lib_stm8-tiny_path := $(subst $(shell pwd)/,,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
 
 include $(__lib_stm8-tiny_path)lib/tiny/lib_tiny.mk
 
