@@ -28,7 +28,7 @@ void uart1_receive_isr(void) __interrupt(ITC_IRQ_UART1_RX)
   tiny_single_subscriber_event_publish(&receive, &args);
 }
 
-void send(i_tiny_uart_t* _self, uint8_t byte)
+static void send(i_tiny_uart_t* _self, uint8_t byte)
 {
   (void)_self;
 
@@ -38,13 +38,13 @@ void send(i_tiny_uart_t* _self, uint8_t byte)
   UART1->CR2 |= UART1_CR2_TIEN;
 }
 
-i_tiny_event_t* on_send_complete(i_tiny_uart_t* _self)
+static i_tiny_event_t* on_send_complete(i_tiny_uart_t* _self)
 {
   (void)_self;
   return &send_complete.interface;
 }
 
-i_tiny_event_t* on_receive(i_tiny_uart_t* _self)
+static i_tiny_event_t* on_receive(i_tiny_uart_t* _self)
 {
   (void)_self;
   return &receive.interface;
