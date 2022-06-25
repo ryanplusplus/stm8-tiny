@@ -15,9 +15,8 @@ enum {
 
 static tiny_timer_t timer;
 
-static void blink(tiny_timer_group_t* group, void* context)
+static void blink(void* context)
 {
-  (void)group;
   (void)context;
   GPIOD->ODR ^= pin_0;
 }
